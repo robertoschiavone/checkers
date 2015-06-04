@@ -1,0 +1,222 @@
+
+pieces_batch = pyglet.graphics.Batch()
+tiles_batch = pyglet.graphics.Batch()
+
+WIDTH = 8
+HEIGHT = 8
+
+selected = None
+
+"""Contiene le informazioni relative alla grafica dello sfondo"""
+background = [[None for x in range(HEIGHT)] for x in range(WIDTH)]
+
+"""Contiene le informazioni sulle posizioni delle pedine nella scacchiera"""
+pieces = [[None for x in range(HEIGHT)] for x in range(WIDTH)]
+
+"""Contiene le informazioni relative alla grafica delle pedine"""
+gfx_pieces = [[None for x in range(HEIGHT)] for x in range(WIDTH)]
+
+window = pyglet.window.Window(WIDTH * 64, HEIGHT * 64, "Checkers")
+
+"""Popola lo sfondo"""
+for x in range(WIDTH):
+    for y in range(HEIGHT):
+
+        if (x + y) % 2 == 0:
+            background[x][y] = pyglet.sprite.Sprite(Resources.WHITE_TILE)
+        else:
+            background[x][y] = pyglet.sprite.Sprite(Resources.BLACK_TILE)
+
+        background[x][y].batch = tiles_batch
+        background[x][y].position = (x * 64, y * 64)
+
+
+
+for x in range(WIDTH):
+    for y in range(HEIGHT):       
+
+        if (x + y) % 2 != 0:
+            if y in range(3):
+                pieces[x][y] = PieceEnum.WHITE_PIECE
+                gfx_pieces[x][y] = pyglet.sprite.Sprite(Resources.WHITE_PIECE)
+            elif y in range(3, HEIGHT):
+                if (x % 2) == 0:
+                    pieces[x][y] = PieceEnum.BLACK_PIECE
+                    gfx_pieces[x][y] = pyglet.sprite.Sprite(Resources.BLACK_PIECE)
+                else:
+                    pieces[x][y] = PieceEnum.EMPTY
+                    gfx_pieces[x][y] = pyglet.sprite.Sprite(Resources.EMPTY)
+            else:
+                pieces[x][y] = PieceEnum.EMPTY
+                gfx_pieces[x][y] = pyglet.sprite.Sprite(Resources.EMPTY)
+        else:
+            pieces[x][y] = PieceEnum.EMPTY
+            gfx_pieces[x][y] = pyglet.sprite.Sprite(Resources.EMPTY)
+
+        gfx_pieces[x][y].position = (x * 64, y * 64)
+        gfx_pieces[x][y].batch = pieces_batch
+
+@window.event
+def on_draw():
+    window.clear()
+
+    if "hightlighted_tiles" not in on_draw.__dict__:
+            if selected is not None:
+                on_draw.hightlighted_tiles = find_all_legal_moves(turn, selected)
+
+                for coords in on_draw.hightlighted_tiles:
+                    background[coords[0]][coords[1]].image = Resources.HIGHTLIGHTED_TILE
+    
+    else:
+        if selected is not None:
+            for coords in on_draw.hightlighted_tiles:
+                if coords != selected:
+                    background[coords[0]][coords[1]].image = Resources.BLACK_TILE
+
+            on_draw.hightlighted_tiles = find_all_legal_moves(turn, selected)
+
+            for coords in on_draw.hightlighted_tiles:
+                background[coords[0]][coords[1]].image = Resources.HIGHTLIGHTED_TILE
+        else:
+            for coords in on_draw.hightlighted_tiles:
+                background[coords[0]][coords[1]].image = Resources.BLACK_TILE
+
+    tiles_batch.draw()
+
+    pieces_batch.draw()
+     
+@window.event
+def on_mouse_press(coord_x, coord_y, button, modifiers):
+    global selected
+    global turn
+
+    if turn == Turn.WHITE:
+
+        x = coord_x // 64
+        y = coord_y // 64
+
+        if (x+y)%2 != 0:
+            if pieces[x][y] == PieceEnum.WHITE_PIECE:
+                if selected is not None:
+                    background[selected[0]][selected[1]].image = Resources.BLACK_TILE
+                selected = (x, y)
+                background[x][y].image = Resources.SELECTED_TILE
+
+            elif pieces[x][y] == PieceEnum.BLACK_PIECE and selected is not None:
+                background[selected[0]][selected[1]].image = Resources.BLACK_TILE
+                selected = None
+            else:
+                if selected is not None:
+                    if y - selected[1] == 1 and abs(x - selected[0]) == 1:
+                        pieces[x][y] = PieceEnum.WHITE_PIECE
+                        pieces[selected[0]][selected[1]] = PieceEnum.EMPTY
+
+                        gfx_pieces[x][y].image = Resources.WHITE_PIECE
+                        gfx_pieces[selected[0]][selected[1]].image = Resources.EMPTY
+                        
+                        background[selected[0]][selected[1]].image = Resources.BLACK_TILE
+                        
+                        selected = None
+                        turn = Turn.BLACK
+
+def minimax(node, depth, maximizing_player):
+    if depth == 0: #or node is a terminal node:
+        pass
+        # return the heuristic value of node
+    if maximizing_player:
+        best_value = -float("inf")
+        
+        for child in node:
+            value = minimax(child, depth - 1, False)
+            bestValue = max(best_value, value)
+        return best_value
+    else:
+        best_value = float("inf")
+        for child in node:
+            value = minimax(child, depth - 1, True)
+            best_value = min(best_value, value)
+
+        return best_value
+
+def find_all_legal_moves(turn, piece, moves = None):
+    """yolo
+    
+    Args:
+        turn: expl
+        piece: a tuple containing the integer coordinates of the piece to be
+            considered
+
+    Kwargs:
+        none
+
+    Returns:
+        a list of tuples, each tuple contains the coordinates of every tile that
+        can be reached by the selected piece
+    
+    """
+    if moves is None:
+        moves = list()
+
+    x = piece[0]
+    y = piece[1]
+
+    if turn == Turn.BLACK:
+        if pieces[x][y] == PieceEnum.BLACK_PIECE:
+            pass
+        elif pieces[x][y] == PieceEnum.PROMOTED_BLACK_PIECE:
+            pass
+        else:
+            raise ValueError
+                
+
+    elif turn == Turn.WHITE:
+        if pieces[x][y] == PieceEnum.WHITE_PIECE:
+            if y < 7:
+                if x == 0:
+                    moves.append((x + 1, y + 1))
+                elif x == WIDTH - 1:
+                    moves.append((x - 1, y + 1))
+                else:
+                    moves.append((x + 1, y + 1))
+                    moves.append((x - 1, y + 1))
+                    
+        elif pieces[x][y] == PieceEnum.PROMOTED_WHITE_PIECE:
+            pass
+
+    for coords in moves:
+        pass
+
+    return moves
+
+def calculate_result(move):
+    
+    result = 0
+
+    for index, coords in enumerate(move):
+        if abs(coords[0] - move[index + 1][0]) > 1:
+            x = coords[0] - 1
+            y = coords[1] - 1
+            eaten_piece = pieces[x][y]
+
+            if eaten_piece == PieceEnum.BLACK_PIECE or eaten_piece == PieceEnum.WHITE_PIECE:
+                result += 1
+            elif eaten_piece == PieceEnum.PROMOTED_BLACK_PIECE or eaten_piece == PieceEnum.PROMOTED_WHITE_PIECE:
+                result += 2
+
+
+def find_best_move(moves):
+
+    max = 0
+
+    for move in moves:
+        n = calculate_result(move)
+        if n >= max:
+            max = n
+
+    return max
+
+# minimax(origin, depth, TRUE)
+
+game = pyglet.app.EventLoop()
+
+game.run()

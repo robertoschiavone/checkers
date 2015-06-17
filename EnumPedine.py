@@ -24,11 +24,28 @@
 # THE SOFTWARE.
 #
 
-from enum import Enum, unique
+class EnumPedine:
 
-@unique
-class TileEnum(Enum):
-    """   """
-    WHITE_TILE = 1
-    BLACK_TILE = 2
-    SELECTED_TILE = 3
+    def __init__(self):
+        self.vuoto = 0
+    
+        self.pedina_bianca = 1
+        self.pedina_nera = 2
+
+        self.dama_bianca = 3
+        self.dama_nera = 4
+
+    def leggi_vuoto(self):
+        return self.vuoto
+
+    def leggi_pedina_bianca(self):
+        return self.pedina_bianca
+
+    def leggi_pedina_nera(self):
+        return self.pedina_nera
+
+    def leggi_dama_bianca(self):
+        return self.dama_bianca
+
+    def leggi_dama_nera(self):
+        return self.dama_nera

@@ -24,10 +24,18 @@
 # THE SOFTWARE.
 #
 
-from enum import Enum, unique
+class EnumCaselle:
+    
+    def __init__(self):
+        self.casella_bianca = 1
+        self.casella_nera = 2
+        self.casella_selezionata = 3
 
-@unique
-class Turn(Enum):
-    """   """
-    WHITE = 1
-    BLACK = 2
+    def leggi_casella_bianca(self):
+        return self.casella_bianca
+
+    def leggi_casella_nera(self):
+        return self.casella_nera
+
+    def leggi_casella_selezionata(self):
+        return self.casella_selezionata

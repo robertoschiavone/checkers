@@ -24,16 +24,14 @@
 # THE SOFTWARE.
 #
 
-from enum import Enum, unique
-
-@unique
-class PieceEnum(Enum):
-    """   """
-
-    EMPTY = 0
+class EnumTurno:
     
-    WHITE_PIECE = 1
-    BLACK_PIECE = 2
+    def __init__(self):
+        self.bianco = 1
+        self.nero = 2
 
-    PROMOTED_WHITE_PIECE = 3
-    PROMOTED_BLACK_PIECE = 4
+    def leggi_bianco(self):
+        return self.bianco
+
+    def leggi_nero(self):
+        return self.nero

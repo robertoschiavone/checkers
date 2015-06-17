@@ -24,10 +24,28 @@
 # THE SOFTWARE.
 #
 
-from Turn import *
+from Turno import *
 
-class Status:
+class Stato:
 
-    turn = Turn.WHITE
+    def __init__(self, turno, selezionato = None):
+        self.turno = turno
 
-    selected = None
+        self.selezionato = selezionato
+
+    def cambia_turno(self):
+        t = EnumTurno()
+
+        if self.turno == t.leggi_nero():
+            self.turno = t.leggi_bianco()
+        else:
+            self.turno = t.leggi_nero()
+
+    def leggi_turno(self):
+        return self.turno
+
+    def scrivi_turno(self, selected):
+        self.selezionato
+
+    def leggi_selezionato(self):
+        return self.selezionato

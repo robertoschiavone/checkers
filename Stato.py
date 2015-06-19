@@ -1,5 +1,3 @@
-"""
-"""
 #
 # The MIT License (MIT)
 #
@@ -27,25 +25,44 @@
 from Turno import *
 
 class Stato:
+    """
+    Tiene traccia del turno corrente e dell'eventuale casella/pedina selezionata.
+    """
 
     def __init__(self, turno, selezionato = None):
+        """
+        Inizializza il turno e la pedina selezionata.
+        """
         self.turno = turno
 
         self.selezionato = selezionato
 
     def cambia_turno(self):
-        t = EnumTurno()
+        """
+        """
 
-        if self.turno == t.leggi_nero():
-            self.turno = t.leggi_bianco()
+        enum_turno = EnumTurno()
+
+        # se e' turno dei neri
+        if self.turno == enum_turno.leggi_nero():
+            # adesso tocca ai bianchi
+            self.turno = enum_turno.leggi_bianco()
+        
+        # altrimenti tocca ai neri
         else:
-            self.turno = t.leggi_nero()
+            self.turno = enum_turno.leggi_nero()
 
     def leggi_turno(self):
+        """
+        Restituisce il turno corrente.
+        """
         return self.turno
 
-    def scrivi_turno(self, selected):
-        self.selezionato
-
     def leggi_selezionato(self):
+        """
+        Restituisce la pedina selezionata corrente.
+        """
         return self.selezionato
+
+    def scrivi_selezionato(self, coord):
+        self.selezionato = coord

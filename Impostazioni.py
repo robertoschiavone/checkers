@@ -1,5 +1,3 @@
-"""
-"""
 #
 # The MIT License (MIT)
 #
@@ -24,7 +22,11 @@
 # THE SOFTWARE.
 #
 class Impostazioni:
-
+    """
+    Contiene le informazioni su altezza e larghezza della damiera. A differenza
+    della classe Stato, le informazioni non possono piu essere cambiate durante
+    l'esecuzione del programma.
+    """
     def __init__(self, larghezza, altezza):
         self.larghezza = larghezza
         self.altezza = altezza

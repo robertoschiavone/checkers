@@ -1,5 +1,3 @@
-"""
-"""
 #
 # The MIT License (MIT)
 #
@@ -25,6 +23,9 @@
 #
 
 class EnumTurno:
+    """
+    Semplice rappresentazione dei valori che un turno puo assumere.
+    """
     
     def __init__(self):
         self.bianco = 1

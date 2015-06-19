@@ -1,5 +1,3 @@
-"""
-"""
 #
 # The MIT License (MIT)
 #
@@ -34,27 +32,35 @@ from Turno import *
 
 import pyglet
 
-def calcola_mosse_consentite(enum_turno, pedina, mosse = None):
-    """
-    Args:
-        - turn:
+def minimax(nodo, profondita, massimizzare, damiera):
+    if profondita == 0: # oppure l'insieme di mosse porta in vantaggio l'AI,
+       # cioè l'azione si conclude con una pedina mangiata da parte dell'AI,
+       # a cui il giocatore non può rispondere con la mossa immediatamente successiva
+        return calcola_risultato(calcola_mossa_migliore(damiera, nodo))
+    
+    if massimizzare == True:
+        risultato = Float("-inf")
+        for mossa in nodo:
+            valore = minimax(mossa, profondita - 1, False)
+    
+            risultato = max(risultato, valore)
+    
+        return risultato
+    else:
+        risultato = Float("+inf")
+        for mossa in nodo:
+            valore = minimax(mossa, profondita - 1, True)
+
+            risultato = max(risultato, valore)
         
-        - piece: a tuple containing the integer coordinates of the piece to be
-            considered
+            return risultato
 
-        - moves: 
 
-    Kwargs:
-        none
 
-    Returns:
-        a list of tuples, each tuple contains the coordinates of every tile that
-        can be reached by the selected piece
-    
-    """
-    
+def calcola_mosse_consentite(damiera, impostazioni, turno, pedina, mosse = None):
+
     enum_turno = EnumTurno()
-
+    enum_pedine = EnumPedine()
 
     if mosse is None:
         mosse = list()
@@ -64,250 +70,355 @@ def calcola_mosse_consentite(enum_turno, pedina, mosse = None):
 
         mosse.append((x,y))
 
-
-        if enum_turno == enum_turno.leggi_nero():
-            if Checkerboard.pieces[x][y] == PieceEnum.BLACK_PIECE:
-                pass
-            elif Checkerboard.pieces[x][y] == PieceEnum.PROMOTED_BLACK_PIECE:
-                pass
-
-        elif enum_turno == enum_turno.get_white():
-            if Checkerboard.pieces[x][y] == PieceEnum.WHITE_PIECE:
+    if turno == enum_turno.leggi_nero():
+        if damiera.leggi_pedina(x, y) == enum_pedine.leggi_pedina_nera() or \
+            damiera.leggi_pedina(x, y) == enum_pedine.leggi_dama_nera():
                 
-                if x < Settings.width - 1 and y < Settings.height - 1:
+            if x < impostazioni.leggi_larghezza() - 1 and y > 0:
                     
-                    if Checkerboard.pieces[x+1][y+1] == PieceEnum.BLACK_PIECE \
-                    or Checkerboard.pieces[x+1][y+1] == \
-                    PieceEnum.PROMOTED_BLACK_PIECE:
-                    
-                        #  ___ ___ ___
-                        # |   |   |   |
-                        # |   |   | # |
-                        # |___|___|___|
-                        # |   |   |   |
-                        # |   | b |   |
-                        # |___|___|___|
-                        # |   |   |   |
-                        # | w |   |   |
-                        # |___|___|___|
-                        #
-                        if x + 2 < Settings.width and y + 2 < Settings.height:
-                            if Checkerboard.pieces[x+2][y+2] == PieceEnum.EMPTY:
-                                mosse.append((x+2, y+2))
-                    #  ___ ___ ___
-                    # |   |   |   |
-                    # |   |   |   |
-                    # |___|___|___|
-                    # |   |   |   |
-                    # |   | # |   |
-                    # |___|___|___|
-                    # |   |   |   |
-                    # | w |   |   |
-                    # |___|___|___|
-                    #
-                    elif Checkerboard.pieces[x+1][y+1] == PieceEnum.EMPTY:
-                         mosse.append((x+1, y+1))
+                if damiera.leggi_pedina(x-1, y-1) == enum_pedine.leggi_pedina_bianca() \
+                or damiera.leggi_pedina(x-1, y-1) == \
+                enum_pedine.leggi_dama_bianca():
 
                     #  ___ ___ ___
                     # |   |   |   |
-                    # |   |   |   |
+                    # |   |   | N |
                     # |___|___|___|
                     # |   |   |   |
-                    # |   | # |   |
+                    # |   | B |   |
                     # |___|___|___|
                     # |   |   |   |
-                    # |   |   | w |
+                    # | # |   |   |
                     # |___|___|___|
                     #
-                if x > 0 and y < Settings.height - 1:
-                    if Checkerboard.pieces[x-1][y+1] == PieceEnum.EMPTY:
-                        mosse.append((x-1,y+1))
-                    
-                    elif Checkerboard.pieces[x-1][y+1] == PieceEnum.BLACK_PIECE \
-                    or Checkerboard.pieces[x-1][y+1] == \
-                    PieceEnum.PROMOTED_BLACK_PIECE:
-                    
-                        #  ___ ___ ___
-                        # |   |   |   |
-                        # | # |   |   |
-                        # |___|___|___|
-                        # |   |   |   |
-                        # |   | b |   |
-                        # |___|___|___|
-                        # |   |   |   |
-                        # |   |   | w |
-                        # |___|___|___|
-                        #
-                        if x - 2 >= 0 and y + 2 < Settings.height:
-                            if Checkerboard.pieces[x-2][y+2] == PieceEnum.EMPTY:
-                                mosse.append((x-2, y+2))
+                    if x - 2 >= 0 and y - 2 >= 0:
+                        if damiera.leggi_pedina(x-2, y-2) == enum_pedine.leggi_vuoto():
+                            mosse.append((x-2, y-2))
+                #  ___ ___ ___
+                # |   |   |   |
+                # |   |   | N |
+                # |___|___|___|
+                # |   |   |   |
+                # |   | # |   |
+                # |___|___|___|
+                # |   |   |   |
+                # |   |   |   |
+                # |___|___|___|
+                #
+                elif damiera.leggi_pedina(x-1, y-1) == enum_pedine.leggi_vuoto():
+                        mosse.append((x-1, y-1))
 
-            elif pieces[x][y] == PieceEnum.PROMOTED_WHITE_PIECE:
-                pass
+                #  ___ ___ ___
+                # |   |   |   |
+                # | N |   |   |
+                # |___|___|___|
+                # |   |   |   |
+                # |   | # |   |
+                # |___|___|___|
+                # |   |   |   |
+                # |   |   |   |
+                # |___|___|___|
+                #
+            if x > 0 and y < impostazioni.leggi_altezza() - 1:
+                if damiera.leggi_pedina(x-1, y+1) == enum_pedine.leggi_vuoto():
+                    mosse.append((x-1,y+1))
+                    
+                elif damiera.leggi_pedina(x-1, y+1) == enum_pedine.leggi_pedina_nera() \
+                or damiera.leggi_pedina(x-1, y+1) == \
+                enum_pedine.leggi_dama_nera():
+                    
+                    #  ___ ___ ___
+                    # |   |   |   |
+                    # | N |   |   |
+                    # |___|___|___|
+                    # |   |   |   |
+                    # |   | B |   |
+                    # |___|___|___|
+                    # |   |   |   |
+                    # |   |   | # |
+                    # |___|___|___|
+                    #
+                    if x - 2 >= 0 and y + 2 < impostazioni.leggi_altezza():
+                        if damiera.leggi_pedina(x-2, y+2) == enum_pedine.leggi_vuoto():
+                            mosse.append((x-2, y+2))
 
-        for coords in mosse:
+        if damiera.leggi_pedina(x, y) == enum_pedine.leggi_dama_bianca():
             pass
+
+    elif turno == enum_turno.leggi_bianco():
+        if damiera.leggi_pedina(x, y) == enum_pedine.leggi_pedina_bianca() or \
+            damiera.leggi_pedina(x, y) == enum_pedine.leggi_dama_bianca():
+                
+            if x < impostazioni.leggi_larghezza() - 1 and y < impostazioni.leggi_altezza() - 1:
+                    
+                if damiera.leggi_pedina(x+1, y+1) == enum_pedine.leggi_pedina_nera() \
+                or damiera.leggi_pedina(x+1, y+1) == \
+                enum_pedine.leggi_dama_nera():
+
+                    #  ___ ___ ___
+                    # |   |   |   |
+                    # |   |   | # |
+                    # |___|___|___|
+                    # |   |   |   |
+                    # |   | N |   |
+                    # |___|___|___|
+                    # |   |   |   |
+                    # | B |   |   |
+                    # |___|___|___|
+                    #
+                    if x + 2 < enum_pedine.leggi_pedina_nera() and y + 2 < impostazioni.leggi_altezza():
+                        if damiera.leggi_pedina(x+2, y+2) == enum_pedine.leggi_vuoto():
+                            mosse.append((x+2, y+2))
+                #  ___ ___ ___
+                # |   |   |   |
+                # |   |   |   |
+                # |___|___|___|
+                # |   |   |   |
+                # |   | # |   |
+                # |___|___|___|
+                # |   |   |   |
+                # | B |   |   |
+                # |___|___|___|
+                #
+                elif damiera.leggi_pedina(x+1, y+1) == enum_pedine.leggi_vuoto():
+                        mosse.append((x+1, y+1))
+
+                #  ___ ___ ___
+                # |   |   |   |
+                # |   |   |   |
+                # |___|___|___|
+                # |   |   |   |
+                # |   | # |   |
+                # |___|___|___|
+                # |   |   |   |
+                # |   |   | B |
+                # |___|___|___|
+                #
+            if x > 0 and y < impostazioni.leggi_altezza() - 1:
+                if damiera.leggi_pedina(x-1, y+1) == enum_pedine.leggi_vuoto():
+                    mosse.append((x-1,y+1))
+                    
+                elif damiera.leggi_pedina(x-1, y+1) == enum_pedine.leggi_pedina_nera() \
+                or damiera.leggi_pedina(x-1, y+1) == \
+                enum_pedine.leggi_dama_nera():
+                    
+                    #  ___ ___ ___
+                    # |   |   |   |
+                    # | # |   |   |
+                    # |___|___|___|
+                    # |   |   |   |
+                    # |   | N |   |
+                    # |___|___|___|
+                    # |   |   |   |
+                    # |   |   | B |
+                    # |___|___|___|
+                    #
+                    if x - 2 >= 0 and y + 2 < impostazioni.leggi_altezza():
+                        if damiera.leggi_pedina(x-2, y+2) == enum_pedine.leggi_vuoto():
+                            mosse.append((x-2, y+2))
+
+        if damiera.leggi_pedina(x, y) == enum_pedine.leggi_dama_bianca():
+            pass
+
+    for coord in mosse:
+        pass
 
     return mosse
 
-def calculate_result(move):
-    """
-    Args:
-        - turn:
-        
-        - piece: a tuple containing the integer coordinates of the piece to be
-            considered
+def calcola_risultato(damiera, mossa):
 
-        - moves: 
+    risultato = 0
 
-    Kwargs:
-        none
+    enum_pedine = EnumPedine()
 
-    Returns:
-        a list of tuples, each tuple contains the coordinates of every tile that
-        can be reached by the selected piece
-    
-    """
+    for indice, coord in enumerate(mossa):
+        if abs(coord[0] - mossa[indice + 1][0]) > 1:
+            x = coord[0] - 1
+            y = coord[1] - 1
+            pedina_catturata = damiera.leggi_pedina(x, y)
 
-    result = 0
+            if pedina_catturata == enum_pedine.leggi_pedina_nera() or pedina_catturata == enum_pedine.leggi_pedina_bianca():
+                risultato += 1
+            elif pedina_catturata == enum_pedine.leggi_dama_nera() or pedina_catturata == enum_pedine.leggi_dama_bianca():
+                risultato += 2
 
-    for index, coords in enumerate(move):
-        if abs(coords[0] - move[index + 1][0]) > 1:
-            x = coords[0] - 1
-            y = coords[1] - 1
-            eaten_piece = pieces[x][y]
+    return risultato
 
-            if eaten_piece == PieceEnum.BLACK_PIECE or eaten_piece == PieceEnum.WHITE_PIECE:
-                result += 1
-            elif eaten_piece == PieceEnum.PROMOTED_BLACK_PIECE or eaten_piece == PieceEnum.PROMOTED_WHITE_PIECE:
-                result += 2
 
-def find_best_move(moves):
-    """
-    Args:
-        - turn:
-        
-        - piece: a tuple containing the integer coordinates of the piece to be
-            considered
+def calcola_insieme_mosse(damiera, impostazioni, turno):
 
-        - moves: 
+    enum_turno = EnumTurno()
 
-    Kwargs:
-        none
+    enum_pedine = EnumPedine()
 
-    Returns:
-        a list of tuples, each tuple contains the coordinates of every tile that
-        can be reached by the selected piece
-    
-    """
+    lista_liste_mosse = list()
+
+    if turno == enum_turno.leggi_bianco():
+        for x in range(impostazioni.leggi_larghezza()):
+            for y in range(impostazioni.leggi_altezza()):
+                if damiera.leggi_pedina(x, y) == enum_pedine.leggi_pedina_bianca() or \
+                    damiera.leggi_pedina(x, y) == enum_pedine.leggi_dama_bianca():
+
+                    lista_liste_mosse.append(calcola_mosse_consentite(damiera, impostazioni, turno, (x, y)))
+
+    else:
+        for x in range(impostazioni.leggi_larghezza()):
+            for y in range(impostazioni.leggi_altezza()):
+                if damiera.leggi_pedina(x, y) == enum_pedine.leggi_pedina_nera() or \
+                    damiera.leggi_pedina(x, y) == enum_pedine.leggi_dama_nera():
+
+                    lista_liste_mosse.append(calcola_mosse_consentite(damiera, impostazioni, turno, (x, y)))
 
     max = 0
-    index = 0
 
-    for i, move in enumerate(moves):
-        n = calculate_result(move)
+
+    for lista in lista_liste_mosse:
+        if calcola_risultato(damiera, calcola_mossa_migliore(damiera, lista)) >= max:
+            max = calcola_risultato(damiera, calcola_mossa_migliore(damiera, lista))
+
+
+def calcola_mossa_migliore(damiera, mosse):
+
+    max = 0
+    indice = 0
+
+    for i, mossa in enumerate(mosse):
+        n = calcola_risultato(damiera, mossa)
         if n >= max:
             max = n
-            index = i
+            indice = i
 
-    return moves[index]
+    return mosse[indice]
 
 def main():
 
-    piece_enum = PieceEnum()
+    enum_pedine = EnumPedine()
 
-    pieces_batch = pyglet.graphics.Batch()
-    tiles_batch = pyglet.graphics.Batch()
+    impostazioni = Impostazioni(8, 8)
 
-    settings = Settings(8, 8)
+    enum_turno = EnumTurno()
 
-    turn = Turn()
+    stato = Stato(enum_turno.leggi_bianco())
 
-    status = Status(turn.get_white())
-
-    window = pyglet.window.Window(settings.get_width() * 64, settings.get_height() * 64, "Checkers")
+    window = pyglet.window.Window(impostazioni.leggi_larghezza() * 64, \
+        impostazioni.leggi_altezza() * 64, "Checkers")
     
-    hightlighted_tiles = None
+    caselle_evidenziate = None
 
-    checkerboard = Checkerboard(settings)
+    damiera = Damiera(impostazioni)
 
     @window.event
     def on_draw():
         """   """
         window.clear()
-        checkerboard.draw()
+        damiera.draw()
     
     @window.event
     def on_close():
         window.has_exit = True
         exit(0)
         
+    risorse = Risorse()
 
     @window.event
     def on_mouse_press(coord_x, coord_y, button, modifiers):
         """   """
-        if status.get_turn() == turn.get_white():
 
-            x = coord_x // 64
-            y = coord_y // 64
+        x = coord_x // 64
+        y = coord_y // 64
+
+        if stato.leggi_turno() == enum_turno.leggi_bianco():
 
             if (x+y)%2 != 0:
-                if checkerboard.get_piece(x, y) == piece_enum.get_white_piece():
-                    if status.get_selected() is not None:
-                        checkerboard.background[Status.selected[0]][Status.selected[1]].image = Risorse.BLACK_TILE
-                    
-                    status.set_selected(x, y)
-                    Checkerboard.background[x][y].image = Risorse.SELECTED_TILE
+                if damiera.leggi_pedina(x, y) == enum_pedine.leggi_pedina_bianca():
+                    if stato.leggi_selezionato() is not None:
+                        damiera.cambia_casella(stato.leggi_selezionato(), risorse.leggi_casella_nera())
 
-                elif Checkerboard.pieces[x][y] == PieceEnum.BLACK_PIECE and Status.selected is not None:
-                    Checkerboard.background[Status.selected[0]][Status.selected[1]].image = Risorse.BLACK_TILE
-                    Status.selected = None
+                    stato.scrivi_selezionato((x, y))
+                    damiera.cambia_casella((x, y), risorse.leggi_casella_selezionata())
+
+                elif damiera.leggi_pedina(x, y) == enum_pedine.leggi_pedina_nera() and stato.leggi_selezionato() is not None:
+                    damiera.cambia_casella(stato.leggi_selezionato(), risorse.leggi_casella_nera())
+                    stato.scrivi_selezionato(None)
                 else:
-                    if Status.selected is not None:
-                        if (x, y) != Status.selected and (x,y) in calcola_mosse_consentite(Status.turn, Status.selected):
-                            Checkerboard.pieces[x][y] = PieceEnum.WHITE_PIECE
-                            Checkerboard.pieces[Status.selected[0]][Status.selected[1]] = PieceEnum.EMPTY
-
-                            Checkerboard.gfx_pieces[x][y].image = Risorse.WHITE_PIECE
-                            Checkerboard.gfx_pieces[Status.selected[0]][Status.selected[1]].image = Risorse.EMPTY
+                    if stato.leggi_selezionato() is not None:
+                        if (x, y) != stato.leggi_selezionato()and (x,y) in \
+                            calcola_mosse_consentite(damiera, impostazioni,\
+                            stato.leggi_turno(), stato.leggi_selezionato()):
                             
-                            Status.selected = None
-    
+                            damiera.cambia_pedina((x, y), \
+                                stato.leggi_selezionato(), \
+                                enum_pedine.leggi_pedina_bianca())
+                            stato.scrivi_selezionato(None)
+                            stato.cambia_turno()
+                            
+                            
+#                            minimax(calcola_mosse_consentite(damiera, impostazioni, stato.leggi_turno(), pedina),
+ #                                   0, True, damiera)
+
+ #                           stato.cambia_turno()
+        else:
+            if (x+y)%2 != 0:
+                if damiera.leggi_pedina(x, y) == enum_pedine.leggi_pedina_nera():
+                    if stato.leggi_selezionato() is not None:
+                        damiera.cambia_casella(stato.leggi_selezionato(), risorse.leggi_casella_nera())
+
+                    stato.scrivi_selezionato((x, y))
+                    damiera.cambia_casella((x, y), risorse.leggi_casella_selezionata())
+
+                elif damiera.leggi_pedina(x, y) == enum_pedine.leggi_pedina_bianca() and stato.leggi_selezionato() is not None:
+                    damiera.cambia_casella(stato.leggi_selezionato(), risorse.leggi_casella_nera())
+                    stato.scrivi_selezionato(None)
+                else:
+                    if stato.leggi_selezionato() is not None:
+                        if (x, y) != stato.leggi_selezionato()and (x,y) in \
+                            calcola_mosse_consentite(damiera, impostazioni,\
+                            stato.leggi_turno(), stato.leggi_selezionato()):
+                            
+                            damiera.cambia_pedina((x, y), \
+                                stato.leggi_selezionato(), \
+                                enum_pedine.leggi_pedina_nera())
+                            stato.scrivi_selezionato(None)
+                            stato.cambia_turno()
+                            #minimax
+#                            stato.cambia_turno()
+
+   
     while True:
 
         pyglet.clock.tick(True)
 
-        if hightlighted_tiles == None:
-            if Status.selected is not None:
-                hightlighted_tiles = calcola_mosse_consentite(Status.turn, Status.selected)
+        if caselle_evidenziate == None:
+            if stato.leggi_selezionato() is not None:
+                caselle_evidenziate = calcola_mosse_consentite(damiera, impostazioni, stato.leggi_turno(), stato.leggi_selezionato())
 
-                for i, coords in enumerate(hightlighted_tiles):
+                for i, coord in enumerate(caselle_evidenziate):
                     if i == 0:
-                        Checkerboard.background[coords[0]][coords[1]].image = Risorse.SELECTED_TILE
+                        damiera.cambia_casella(coord, risorse.leggi_casella_selezionata())
                     else:
-                        Checkerboard.background[coords[0]][coords[1]].image = Risorse.HIGHTLIGHTED_TILE
+                        damiera.cambia_casella(coord, risorse.leggi_casella_evidenziata())
     
         else:
-            if Status.selected is not None:
-                for coords in hightlighted_tiles:
-                    if coords != selected:
-                        Checkerboard.background[coords[0]][coords[1]].image = Risorse.BLACK_TILE
+            if stato.leggi_selezionato() is not None:
+                for coord in caselle_evidenziate:
+                    if coord != stato.leggi_selezionato():
+                        damiera.cambia_casella(coord, risorse.leggi_casella_nera())
 
-                hightlighted_tiles = calcola_mosse_consentite(Status.turn, Status.selected)
+                caselle_evidenziate = calcola_mosse_consentite(damiera, impostazioni, stato.leggi_turno(), stato.leggi_selezionato())
 
-                for i, coords in enumerate(hightlighted_tiles):
+                for i, coord in enumerate(caselle_evidenziate):
                     if i == 0:
-                        Checkerboard.background[coords[0]][coords[1]].image = Risorse.SELECTED_TILE
+                        damiera.cambia_casella(coord, risorse.leggi_casella_selezionata())
                     else:
-                        Checkerboard.background[coords[0]][coords[1]].image = Risorse.HIGHTLIGHTED_TILE
+                        damiera.cambia_casella(coord, risorse.leggi_casella_evidenziata())
             else:
-                for coords in hightlighted_tiles:
-                    Checkerboard.background[coords[0]][coords[1]].image = Risorse.BLACK_TILE
+                for coord in caselle_evidenziate:
+                    damiera.cambia_casella(coord, risorse.leggi_casella_nera())
         
+
         window.switch_to()
         window.dispatch_events()
         window.dispatch_event('on_draw')
-        turn = switch_turn(turn)
         window.flip()
 
 if __name__ == "__main__":

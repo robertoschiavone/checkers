@@ -3,11 +3,12 @@ from EnumTurno import *
 from Mossa import *
 from Risorse import *
 
+import copy
 import pyglet
 
 class Damiera:
 
-    def __init__(self, lato, pedine=[], turno_iniziale = EnumTurno.BIANCO, selezionato=None):
+    def __init__(self, lato, euristica="AB", pedine=[], turno_iniziale = EnumTurno.BIANCO, selezionato=None):
         """
         Inizializza la damiera,, creando le opportune strutture i dati per 
         gestire le pedine, le caselle e la logica di gioco
@@ -16,15 +17,17 @@ class Damiera:
             - impostazioni: oggetto contenente le informazioni di altezza e
             larghezza, necessarie per la corretta inizializzazione della damiera
         """
+
+        self.euristica = euristica
         
-        self.turno = turno_iniziale
+        self.turno = EnumTurno.BIANCO
         self.turno_iniziale = turno_iniziale
 
         self.lato = lato
 
         self.selezionato = selezionato
 
-        self.alpha_beta_mossa = None
+        self.mossa_ai = None
 
         self.conta_turno = 0
 
@@ -139,7 +142,7 @@ class Damiera:
             if self.leggi_pedina(x, y)  == EnumPedine.PEDINA_NERA \
                 or self.leggi_pedina(x, y) == EnumPedine.DAMA_NERA:
 
-                if x < self.lato-1 and y > 0:
+                if x < self.lato and y > 0:
 
                     if self.leggi_pedina(x-1, y-1) == EnumPedine.PEDINA_BIANCA \
                         or self.leggi_pedina(x-1, y-1) == EnumPedine.DAMA_BIANCA:
@@ -331,9 +334,6 @@ class Damiera:
                     elif self.damiera[x][y] == EnumPedine.DAMA_BIANCA:
                         risultato -= 2
 
-        if turno != self.turno:
-            risultato *= -1
-
         return risultato
 
 
@@ -341,7 +341,7 @@ class Damiera:
     def valuta_mossa(self, mossa, turno):
         risultato_attuale = self.calcola_punteggio(turno)
 
-        damiera = Damiera(self.lato, self.damiera, self.turno, self.selezionato)
+        damiera = Damiera(self.lato, copy.deepcopy(self.damiera), self.turno, self.selezionato)
 
         damiera.muovi(mossa)
 
@@ -367,17 +367,22 @@ class Damiera:
         return mosse_consentite
 
     def calcola_mossa_migliore(self):
-        self.alpha_beta(None, 6, float("-inf"),
-                                float("inf"), self.turno)
 
-        return self.alpha_beta_mossa
+        if self.euristica == "MM":
+            self.minimax(None, 4, True)
+
+        elif self.euristica == "AB":
+            self.alpha_beta(None, 4, float("-inf"),
+                            float("inf"), self.turno)
+
+        return self.mossa_ai
 
 
 
     def alpha_beta(self, nodo, profondita, alpha, beta, turno):
         
         if profondita == 0:
-            self.alpha_beta_mossa = nodo
+            self.mossa_ai = nodo
             return self.valuta_mossa(nodo, turno)
 
         mosse_consentite = self.calcola_mosse_consentite()
@@ -386,23 +391,63 @@ class Damiera:
             risultato = float("-inf")
 
             for mossa in mosse_consentite:
-                
                 risultato = max(risultato, self.alpha_beta(mossa, profondita-1, 
                                                       alpha, beta, False))
                 alpha = max(alpha, risultato)
+
                 if beta <= alpha:
                     break
 
         else:
             risultato = float("inf")
+
             for mossa in mosse_consentite:
                 risultato = min(risultato, self.alpha_beta(mossa, profondita-1, 
                                                       alpha, beta, True))
                 beta = min(beta, risultato)
+
                 if beta <= alpha:
                     break
 
         return risultato
+
+
+
+    def minimax(self, nodo, profondita, massimizza):
+        
+        if profondita == 0:
+            self.mossa_ai = nodo
+            return self.valuta_mossa(nodo, self.turno)
+        
+        mosse_consentite = self.calcola_mosse_consentite()
+
+        if massimizza == True:
+            risultato = float("-inf")
+
+            for mossa in mosse_consentite:
+                valore = self.minimax(mossa, profondita-1, False)
+
+                temp_risultato = risultato
+                risultato = max(risultato, valore)
+
+                if risultato != temp_risultato:
+                    self.mossa_ai = nodo
+
+            return risultato
+
+        else:
+            risultato = float("inf")
+
+            for mossa in mosse_consentite:
+                valore = self.minimax(mossa, profondita-1, True)
+                
+                temp_risultato = risultato
+                risultato = min(risultato, valore)
+
+                if risultato != temp_risultato:
+                    self.mossa_ai = nodo
+            
+            return risultato
 
 
 

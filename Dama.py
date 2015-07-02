@@ -9,13 +9,13 @@ import time
 
 def main():
 
-    lato = 6
+    lato = 8
 
     window = pyglet.window.Window(lato*64, lato*64, 'Dama')
 
     caselle_evidenziate = None
 
-    damiera = Damiera(lato)
+    damiera = Damiera(lato, euristica="MM", turno_iniziale=EnumTurno.NERO)
 
     @window.event
     def on_draw():
@@ -32,7 +32,7 @@ def main():
         x = coord_x // 64
         y = coord_y // 64
 
-        if damiera.get_turno() == damiera.get_turno_iniziale():
+        if damiera.get_turno() == EnumTurno.BIANCO:
 
             if (x + y) % 2 != 0:
                 if damiera.damiera[x][y]  == EnumPedine.PEDINA_BIANCA:
@@ -53,8 +53,7 @@ def main():
 
         else:
             if (x + y) % 2 != 0:
-                if damiera.leggi_pedina(x, y) \
-                    == EnumPedine.PEDINA_NERA:
+                if damiera.leggi_pedina(x, y) == EnumPedine.PEDINA_NERA:
 
                     damiera.set_selezionato((x, y))
 
@@ -74,22 +73,23 @@ def main():
 
                     damiera.cambia_turno()
 
+        window.dispatch_event("on_draw")
+
 
     while True:
 
         pyglet.clock.tick(True)
+        
         window.dispatch_events()
         window.dispatch_event('on_draw')
         window.flip()
-
-        """
+        
         if damiera.get_turno() != damiera.get_turno_iniziale():
-
             mossa = damiera.calcola_mossa_migliore()
             damiera.muovi(mossa)
+            window.dispatch_event('on_draw')
+        
             damiera.cambia_turno()
-        """
-
 
 if __name__ == '__main__':
     main()

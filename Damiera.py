@@ -1,3 +1,26 @@
+#
+# The MIT License (MIT)
+#
+# Copyright (c) 2015, Roberto Schiavone
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+# THE SOFTWARE.
+#
 from EnumPedine import *
 from EnumTurno import *
 from Mossa import *
@@ -8,15 +31,17 @@ import pyglet
 
 class Damiera:
 
-    def __init__(self, lato, euristica="AB", pedine=[], turno_iniziale = EnumTurno.BIANCO, selezionato=None):
+    def __init__(self, lato, euristica="AB", pedine=[], turno_iniziale = EnumTurno.BIANCO, selezionato=None, profondita=4):
         """
         Inizializza la damiera,, creando le opportune strutture i dati per 
         gestire le pedine, le caselle e la logica di gioco
 
         Parametri:
-            - impostazioni: oggetto contenente le informazioni di altezza e
+            - lato: oggetto contenente le informazioni di altezza e
             larghezza, necessarie per la corretta inizializzazione della damiera
         """
+
+        self.profondita = profondita
 
         self.euristica = euristica
         
@@ -28,8 +53,6 @@ class Damiera:
         self.selezionato = selezionato
 
         self.mossa_ai = None
-
-        self.conta_turno = 0
 
         if not pedine:
             self.damiera = [[None for x in range(lato)] for x in range(lato)]
@@ -117,6 +140,12 @@ class Damiera:
 
                 elif self.damiera[x][y] == EnumPedine.PEDINA_NERA:
                     pedine[x][y] = pyglet.sprite.Sprite(risorse.leggi_pedina_nera())
+
+                elif self.damiera[x][y] == EnumPedine.DAMA_BIANCA:
+                    pedine[x][y] = pyglet.sprite.Sprite(risorse.leggi_dama_bianca())
+
+                elif self.damiera[x][y] == EnumPedine.DAMA_NERA:
+                    pedine[x][y] = pyglet.sprite.Sprite(risorse.leggi_dama_nera())
             
                 else:
                     pedine[x][y] = pyglet.sprite.Sprite(risorse.leggi_vuoto())
@@ -130,8 +159,6 @@ class Damiera:
 
 
     def calcola_mosse_pedina(self, pedina):
-
-        print(pedina)
 
         x = pedina[0]
         y = pedina[1]
@@ -217,7 +244,83 @@ class Damiera:
 
             if self.leggi_pedina(x, y) \
                 == EnumPedine.DAMA_NERA:
-                pass
+
+                if x < self.lato-1 and y  < self.lato-1:
+
+                    if self.leggi_pedina(x+1, y+1) == EnumPedine.PEDINA_BIANCA \
+                        or self.leggi_pedina(x+1, y+1) == EnumPedine.DAMA_BIANCA:
+
+                        #  ___ ___ ___
+                        # |   |   |   |
+                        # |   |   | # |
+                        # |___|___|___|
+                        # |   |   |   |
+                        # |   | N |   |
+                        # |___|___|___|
+                        # |   |   |   |
+                        # | B |   |   |
+                        # |___|___|___|
+                        #
+
+                        if x+2 <= self.lato and y+2 < self.lato:
+                            if self.leggi_pedina(x+2, y+2) == EnumPedine.VUOTO:
+                                mossa = Mossa((x, y), (x+2, y+2), (x+1, y+1))
+                                mosse_consentite.append(mossa)
+
+                    elif self.leggi_pedina(x+1, y+1) == EnumPedine.VUOTO:
+
+                    #  ___ ___ ___
+                    # |   |   |   |
+                    # |   |   |   |
+                    # |___|___|___|
+                    # |   |   |   |
+                    # |   | # |   |
+                    # |___|___|___|
+                    # |   |   |   |
+                    # | B |   |   |
+                    # |___|___|___|
+                    #
+
+                        mossa = Mossa((x, y), (x+1, y+1))
+                        mosse_consentite.append(mossa)
+
+                    #  ___ ___ ___
+                    # |   |   |   |
+                    # |   |   |   |
+                    # |___|___|___|
+                    # |   |   |   |
+                    # |   | # |   |
+                    # |___|___|___|
+                    # |   |   |   |
+                    # |   |   | B |
+                    # |___|___|___|
+                    #
+
+                if x > 0 and y < self.lato-1:
+                    if self.leggi_pedina(x-1, y+1) == EnumPedine.VUOTO:
+                        mossa = Mossa((x, y), (x-1, y+1))
+                        mosse_consentite.append(mossa)
+
+                    elif self.leggi_pedina(x-1, y+1) == EnumPedine.PEDINA_BIANCA \
+                        or self.leggi_pedina(x-1, y+1) == EnumPedine.DAMA_BIANCA:
+
+                        #  ___ ___ ___
+                        # |   |   |   |
+                        # | # |   |   |
+                        # |___|___|___|
+                        # |   |   |   |
+                        # |   | N |   |
+                        # |___|___|___|
+                        # |   |   |   |
+                        # |   |   | B |
+                        # |___|___|___|
+                        #
+
+                        if x-2 >= 0 and y+2  < self.lato:
+                            if self.leggi_pedina(x-2, y+2) == EnumPedine.VUOTO:
+                                mossa = Mossa((x, y), (x-2, y+2), (x-1, y+1))
+                                mosse_consentite.append(mossa)
+
 
         elif self.turno == EnumTurno.BIANCO:
 
@@ -300,10 +403,80 @@ class Damiera:
                                 mosse_consentite.append(mossa)
 
             if self.leggi_pedina(x, y) == EnumPedine.DAMA_BIANCA:
-                pass
 
-        print(self.turno)
-        print(len(mosse_consentite))
+                if x < self.lato and y > 0:
+
+                    if self.leggi_pedina(x-1, y-1) == EnumPedine.PEDINA_NERA \
+                        or self.leggi_pedina(x-1, y-1) == EnumPedine.DAMA_NERA:
+
+                        #  ___ ___ ___
+                        # |   |   |   |
+                        # |   |   | N |
+                        # |___|___|___|
+                        # |   |   |   |
+                        # |   | B |   |
+                        # |___|___|___|
+                        # |   |   |   |
+                        # | # |   |   |
+                        # |___|___|___|
+                        #
+
+                        if x-2 >= 0 and y-2 >= 0:
+                            if self.leggi_pedina(x-2, y-2) == EnumPedine.VUOTO:
+                                mossa = Mossa((x, y), (x-2, y-2), (x-1, y-1))
+                                mosse_consentite.append(mossa)
+                    #  ___ ___ ___
+                    # |   |   |   |
+                    # |   |   | N |
+                    # |___|___|___|
+                    # |   |   |   |
+                    # |   | # |   |
+                    # |___|___|___|
+                    # |   |   |   |
+                    # |   |   |   |
+                    # |___|___|___|
+                    #
+                    elif self.leggi_pedina(x-1, y-1) == EnumPedine.VUOTO:
+                        mossa = Mossa((x, y), (x-1, y-1))
+                        mosse_consentite.append(mossa)
+
+                    #  ___ ___ ___
+                    # |   |   |   |
+                    # | N |   |   |
+                    # |___|___|___|
+                    # |   |   |   |
+                    # |   | # |   |
+                    # |___|___|___|
+                    # |   |   |   |
+                    # |   |   |   |
+                    # |___|___|___|
+                    #
+
+                if x < self.lato-1 and y > 1:
+                    if self.leggi_pedina(x+1, y-1) == EnumPedine.VUOTO:
+                        mossa = Mossa((x, y), (x+1, y-1))
+                        mosse_consentite.append(mossa)
+
+                    elif self.leggi_pedina(x+1, y-1) == EnumPedine.PEDINA_BIANCA \
+                        or self.leggi_pedina(x+1, y-1) == EnumPedine.DAMA_BIANCA:
+
+                        #  ___ ___ ___
+                        # |   |   |   |
+                        # | N |   |   |
+                        # |___|___|___|
+                        # |   |   |   |
+                        # |   | B |   |
+                        # |___|___|___|
+                        # |   |   |   |
+                        # |   |   | # |
+                        # |___|___|___|
+                        #
+
+                        if x+2 < self.lato and y-2 >= 0:
+                            if self.leggi_pedina(x+2, y-2) == EnumPedine.VUOTO:
+                                mossa = Mossa((x, y), (x+2, y-2), (x+1, y-1))
+                                mosse_consentite.append(mossa)
+
         return mosse_consentite
 
 
@@ -317,20 +490,65 @@ class Damiera:
                 if self.turno == EnumTurno.BIANCO:
                     if self.damiera[x][y] == EnumPedine.PEDINA_BIANCA:
                         risultato += 1
+                        if (y == 0 or y == self.lato-1) and (x == 0 or \
+                            x == self.lato-1):
+                            risultato += 0.5
+
+                        elif (x <= self.lato//2 + 1 and \
+                            x >= self.lato//2 + 1) and \
+                            (y <= self.lato//2 + 1 and \
+                            y >= self.lato//2 + 1):
+                            risultato += 0.25
+
                     elif self.damiera[x][y] == EnumPedine.DAMA_BIANCA:
-                        risultato += 2
+                        risultato += 3
+                        
+                        if (y == 0 or y == self.lato-1) and (x == 0 or \
+                            x == self.lato-1):
+                            risultato += 0.5
+
+                        elif (x <= self.lato//2 + 1 and \
+                            x >= self.lato//2 + 1) and \
+                            (y <= self.lato//2 + 1 and \
+                            y >= self.lato//2 + 1):
+                            risultato += 0.25
+
                     elif self.damiera[x][y] == EnumPedine.PEDINA_NERA:
                         risultato -= 1
+
                     elif self.damiera[x][y] == EnumPedine.DAMA_NERA:
                         risultato -= 2
 
                 elif self.turno == EnumTurno.NERO:
                     if self.damiera[x][y] == EnumPedine.PEDINA_NERA:
                         risultato += 1
+
+                        if (y == 0 or y == self.lato-1) and (x == 0 or \
+                            x == self.lato-1):
+                            risultato += 0.5
+
+                        elif (x <= self.lato//2 + 1 and \
+                            x >= self.lato//2 + 1) and \
+                            (y <= self.lato//2 + 1 and \
+                            y >= self.lato//2 + 1):
+                            risultato += 0.25
+
                     elif self.damiera[x][y] == EnumPedine.DAMA_NERA:
-                        risultato += 2
+                        risultato += 3
+
+                        if (y == 0 or y == self.lato-1) and (x == 0 or \
+                            x == self.lato-1):
+                            risultato += 0.5
+
+                        elif (x <= self.lato//2 + 1 and \
+                            x >= self.lato//2 + 1) and \
+                            (y <= self.lato//2 + 1 and \
+                            y >= self.lato//2 + 1):
+                            risultato += 0.25
+
                     elif self.damiera[x][y] == EnumPedine.PEDINA_BIANCA:
                         risultato -= 1
+
                     elif self.damiera[x][y] == EnumPedine.DAMA_BIANCA:
                         risultato -= 2
 
@@ -341,7 +559,7 @@ class Damiera:
     def valuta_mossa(self, mossa, turno):
         risultato_attuale = self.calcola_punteggio(turno)
 
-        damiera = Damiera(self.lato, copy.deepcopy(self.damiera), self.turno, self.selezionato)
+        damiera = Damiera(self.lato, self.euristica, copy.deepcopy(self.damiera), turno, self.selezionato)
 
         damiera.muovi(mossa)
 
@@ -357,11 +575,13 @@ class Damiera:
         for x in range(self.lato):
             for y in range(self.lato):
                 if self.turno == EnumTurno.BIANCO and \
-                    self.damiera[x][y] == EnumPedine.PEDINA_BIANCA:
+                    (self.damiera[x][y] == EnumPedine.PEDINA_BIANCA or \
+                    self.damiera[x][y] == EnumPedine.DAMA_BIANCA):
                     mosse_consentite += self.calcola_mosse_pedina((x, y))
                 
                 elif self.turno == EnumTurno.NERO and \
-                    self.damiera[x][y] == EnumPedine.PEDINA_NERA:
+                    (self.damiera[x][y] == EnumPedine.PEDINA_NERA or \
+                     self.damiera[x][y] == EnumPedine.DAMA_NERA):
                     mosse_consentite += self.calcola_mosse_pedina((x, y))
         
         return mosse_consentite
@@ -369,10 +589,10 @@ class Damiera:
     def calcola_mossa_migliore(self):
 
         if self.euristica == "MM":
-            self.minimax(None, 4, True)
+            self.minimax(None, self.profondita, True)
 
         elif self.euristica == "AB":
-            self.alpha_beta(None, 4, float("-inf"),
+            self.alpha_beta(None, self.profondita, float("-inf"),
                             float("inf"), self.turno)
 
         return self.mossa_ai
@@ -392,7 +612,7 @@ class Damiera:
 
             for mossa in mosse_consentite:
                 risultato = max(risultato, self.alpha_beta(mossa, profondita-1, 
-                                                      alpha, beta, False))
+                                                        alpha, beta, False))
                 alpha = max(alpha, risultato)
 
                 if beta <= alpha:
@@ -403,7 +623,7 @@ class Damiera:
 
             for mossa in mosse_consentite:
                 risultato = min(risultato, self.alpha_beta(mossa, profondita-1, 
-                                                      alpha, beta, True))
+                                                        alpha, beta, True))
                 beta = min(beta, risultato)
 
                 if beta <= alpha:
@@ -427,11 +647,7 @@ class Damiera:
             for mossa in mosse_consentite:
                 valore = self.minimax(mossa, profondita-1, False)
 
-                temp_risultato = risultato
                 risultato = max(risultato, valore)
-
-                if risultato != temp_risultato:
-                    self.mossa_ai = nodo
 
             return risultato
 
@@ -441,11 +657,7 @@ class Damiera:
             for mossa in mosse_consentite:
                 valore = self.minimax(mossa, profondita-1, True)
                 
-                temp_risultato = risultato
                 risultato = min(risultato, valore)
-
-                if risultato != temp_risultato:
-                    self.mossa_ai = nodo
             
             return risultato
 
@@ -482,5 +694,38 @@ class Damiera:
 
         return n
 
+    def calcola_pedine_nere(self):
+        n = 0
+        
+        for x in range(self.lato):
+            for y in range(self.lato):
+                if self.damiera[x][y] == EnumPedine.PEDINA_NERA or \
+                    self.damiera[x][y] == EnumPedine.DAMA_NERA:
+                    n += 1
+        
+        return n 
+
+    def calcola_pedine_bianche(self):
+        n = 0
+        
+        for x in range(self.lato):
+            for y in range(self.lato):
+                if self.damiera[x][y] == EnumPedine.PEDINA_BIANCA or \
+                    self.damiera[x][y] == EnumPedine.DAMA_BIANCA:
+                    n += 1
+        
+        return n
+
     def cambia_turno(self):
+
+        for x in range(self.lato):
+            if self.damiera[x][0] == EnumPedine.PEDINA_NERA:
+                self.damiera[x][0] = EnumPedine.DAMA_NERA
+
+        for x in range(self.lato):
+            if self.damiera[x][self.lato-1] == EnumPedine.PEDINA_BIANCA:
+                self.damiera[x][self.lato-1] = EnumPedine.DAMA_BIANCA
+
         self.turno = (EnumTurno)(1 - self.turno)
+
+

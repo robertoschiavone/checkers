@@ -33,7 +33,8 @@ import sys
 
 def main(args):
 
-    parametri, valori = getopt.getopt(args, "h", ["profondita=", "lato=", "algoritmo=", "colore="])
+    parametri, valori = getopt.getopt(args, "h", ["profondita=", "lato=", 
+                                                  "algoritmo=", "colore="])
 
     lato = 8
 

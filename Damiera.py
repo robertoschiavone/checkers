@@ -201,9 +201,13 @@ class Damiera:
                     # |   |   |   |
                     # |___|___|___|
                     #
-                    elif self.leggi_pedina(x-1, y-1) == EnumPedine.VUOTO:
-                        mossa = Mossa((x, y), (x-1, y-1))
-                        mosse_consentite.append(mossa)
+                    elif x > 0:
+                        if self.leggi_pedina(x-1, y-1) == EnumPedine.VUOTO:
+                            if(x-1, y-1) == (-1,4):
+                                print((x-1, y-1))
+                                print("Qui")
+                            mossa = Mossa((x, y), (x-1, y-1))
+                            mosse_consentite.append(mossa)
 
                     #  ___ ___ ___
                     # |   |   |   |
@@ -262,7 +266,7 @@ class Damiera:
                         # |___|___|___|
                         #
 
-                        if x+2 <= self.lato and y+2 < self.lato:
+                        if x+2 < self.lato and y+2 < self.lato:
                             if self.leggi_pedina(x+2, y+2) == EnumPedine.VUOTO:
                                 mossa = Mossa((x, y), (x+2, y+2), (x+1, y+1))
                                 mosse_consentite.append(mossa)
@@ -583,8 +587,10 @@ class Damiera:
                     (self.damiera[x][y] == EnumPedine.PEDINA_NERA or \
                      self.damiera[x][y] == EnumPedine.DAMA_NERA):
                     mosse_consentite += self.calcola_mosse_pedina((x, y))
-        
+
         return mosse_consentite
+
+
 
     def calcola_mossa_migliore(self):
 
@@ -694,6 +700,8 @@ class Damiera:
 
         return n
 
+
+
     def calcola_pedine_nere(self):
         n = 0
         
@@ -703,7 +711,9 @@ class Damiera:
                     self.damiera[x][y] == EnumPedine.DAMA_NERA:
                     n += 1
         
-        return n 
+        return n
+
+
 
     def calcola_pedine_bianche(self):
         n = 0
@@ -715,6 +725,8 @@ class Damiera:
                     n += 1
         
         return n
+
+
 
     def cambia_turno(self):
 
@@ -729,3 +741,19 @@ class Damiera:
         self.turno = (EnumTurno)(1 - self.turno)
 
 
+
+def __str__(self):
+
+    stringa = str()
+
+    for x in range(self.lato):
+        for y in range(self.lato):
+            if self.damiera[y][x] == EnumPedine.PEDINA_BIANCA:
+                stringa += "B "
+            elif self.damiera[y][x] == EnumPedine.PEDINA_NERA:
+                stringa += "N "
+            else:
+                stringa += "  "
+        stringa += "\n"
+
+    return stringa
